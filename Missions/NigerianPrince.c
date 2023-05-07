@@ -1,5 +1,6 @@
 class NigerianPrinceMission extends SurvivorMissions
 {
+	int MissionCutoffTime;
 	//Mission related entities	
 	ItemBase MissionObject;
 	Object MissionBuilding;
@@ -49,7 +50,7 @@ class NigerianPrinceMission extends SurvivorMissions
 		//Set mission messages for primary mission
 		m_MissionMessage1 = "I received a plea for help from Prince "+ SurvivorName +" of Nigeria.  He was separated from his party when they were attacked by the infected.  He has a opportunity for you near "+ m_MissionLocation +".";
 		m_MissionMessage2 = "He said 'I seize this opportunity to extend my compliments to you.  My guide left and took my personal belongings, foolishly leaving me my equipment.  However, I need my passport back so I can be evacuated.  I had it hidden in a Bible. The guide has agreed to return this Bible in exchange for 1,000 Rubles in 100 Ruble Bills (10x$100).";
-		m_MissionMessage3 = "The guide says to leave the money in a bag at a rest area \n** "+ m_MissionLocationDir +" of "+ m_MissionLocation +" **\n My leg is broken, therefore I am seeking for a reliable survivor to invest ten(10) $100 rubles to bribe the guide and return the Bible to me.  If I don't get it, I will likely die here and my treasure will be lost.  I henceforth offer great wealth, if you will recover my passport for me.";
+		m_MissionMessage3 = "The guide says to leave the money in a bag at a rest area \n** "+ m_MissionLocationDir +" of "+ m_MissionLocation +" **\n My leg is broken, therefore I am seeking for a reliable survivor to invest $1000 in gold (single gold bar) to bribe the guide and return the Bible to me.  If I don't get it, I will likely die here and my treasure will be lost.  I henceforth offer great wealth, if you will recover my passport for me.";
 		
 		//Spawnpoint for MissionObject for secondary,Primary mission
 		Spawnpoints.Insert("0.84 16.75 0.16");
@@ -106,7 +107,11 @@ class NigerianPrinceMission extends SurvivorMissions
 		//	for ( int j=0; j < 5; j++ ) if ( farm.IsDoorOpen(j) ) farm.CloseDoor(j); 
 	
 			GetGame().GetCallQueue( CALL_CATEGORY_SYSTEM ).CallLater( GetGame().UpdatePathgraphRegionByObject, 1000, false, table );		
-		}					
+		}				
+		MissionCutoffTime = MissionSettings.RestartCycleTime - (m_MissionTimeout + MissionSettings.DelayTime + ExtendedTimout );
+    
+    if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
+    MissionSettings.DelayTime = 3600;
 	}
 	
 	void ~NigerianPrinceMission()
@@ -198,16 +203,16 @@ class NigerianPrinceMission extends SurvivorMissions
 				
 		if ( selectedLoadout == 0 )
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_M4A1_Honeycomb");
+			weapon = MissionObject.GetInventory().CreateInInventory("M4A1");
 				weapon.GetInventory().CreateAttachment("M4_RISHndgrd");
 				weapon.GetInventory().CreateAttachment("M4_OEBttstck");
-				weapon.GetInventory().CreateAttachment("AD_ACOG");
+				weapon.GetInventory().CreateAttachment("TTC_HAMR");
 				weapon.GetInventory().CreateAttachment("M4_Suppressor");
 			MissionObject.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 			MissionObject.GetInventory().CreateInInventory("M4_T3NRDSOptic");
-			MissionObject.GetInventory().CreateInInventory("Ammo_556x45");
-			MissionObject.GetInventory().CreateInInventory("Ammo_556x45");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_556x45_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_556x45_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("PeachesCan");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
@@ -216,14 +221,14 @@ class NigerianPrinceMission extends SurvivorMissions
 		}
 		if (selectedLoadout == 1)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_SVD_ORANGE");
+			weapon = MissionObject.GetInventory().CreateInInventory("SVD");
 				weapon.GetInventory().CreateAttachment("PSO1Optic");
 			MissionObject.GetInventory().CreateInInventory("Mag_SVD_10Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_SVD_10Rnd");
 			MissionObject.GetInventory().CreateInInventory("PSO1Optic");
 			MissionObject.GetInventory().CreateInInventory("KazuarOptic");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x54");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x54");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x54_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x54_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
@@ -234,15 +239,15 @@ class NigerianPrinceMission extends SurvivorMissions
 		}
 		if (selectedLoadout == 2)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_AKM_Woodland");
+			weapon = MissionObject.GetInventory().CreateInInventory("AKM");
 				weapon.GetInventory().CreateAttachment("MSFC_AK_RailHndgrd_Woodland");
 				weapon.GetInventory().CreateAttachment("MSFC_AK_PlasticButtstock_Woodland");
 				weapon.GetInventory().CreateAttachment("PSO1Optic");
 				weapon.GetInventory().CreateAttachment("AK_Suppressor");
 			MissionObject.GetInventory().CreateInInventory("Mag_AKM_30Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_AKM_30Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("PeachesCan");
@@ -257,11 +262,11 @@ class NigerianPrinceMission extends SurvivorMissions
 			MissionObject.GetInventory().CreateInInventory("TTC_FAL_Magazine");
 			MissionObject.GetInventory().CreateInInventory("TTC_Coupled_FAL_Magazine");
 			MissionObject.GetInventory().CreateInInventory("TTC_Universal_Suppressor_BLACK")
-			MissionObject.GetInventory().CreateInInventory("AD_ACOG");
+			MissionObject.GetInventory().CreateInInventory("TTC_HAMR");
 			MissionObject.GetInventory().CreateInInventory("FNX45");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_45ACP");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_45ACP_25Rnd");
 			MissionObject.GetInventory().CreateInInventory("FNP45_MRDSOptic");
 			MissionObject.GetInventory().CreateInInventory("PistolSuppressor");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
@@ -270,28 +275,28 @@ class NigerianPrinceMission extends SurvivorMissions
 		}	
 		if (selectedLoadout == 4)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_SKS_SNAKE");
+			weapon = MissionObject.GetInventory().CreateInInventory("SKS");
 				weapon.GetInventory().CreateAttachment("PUScopeOptic");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
 			weapon = MissionObject.GetInventory().CreateInInventory("FNX45");
 				weapon.GetInventory().CreateAttachment("PistolSuppressor");
 				EntityAI weaponlight = weapon.GetInventory().CreateAttachment("TLRLight");
 					weaponlight.GetInventory().CreateAttachment("Battery9V");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_45ACP");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_45ACP_25Rnd");
 			MissionObject.GetInventory().CreateInInventory("AmmoBox");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 		}	
 		if (selectedLoadout == 5)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_Winchester70_BLUE");
+			weapon = MissionObject.GetInventory().CreateInInventory("Winchester70");
 				weapon.GetInventory().CreateAttachment("AD_Pilad");
 			MissionObject.GetInventory().CreateInInventory("Ammo_308Win");
 			MissionObject.GetInventory().CreateInInventory("Ammo_308Win");
 			MissionObject.GetInventory().CreateInInventory("FNX45");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_45ACP");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_45ACP_25Rnd");
 			MissionObject.GetInventory().CreateInInventory("AmmoBox");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("TLRLight");
@@ -300,11 +305,11 @@ class NigerianPrinceMission extends SurvivorMissions
 		}
 		if (selectedLoadout == 6)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("FN_SCAR_Black");
-				weapon.GetInventory().CreateAttachment("AD_ACOG");
-			MissionObject.GetInventory().CreateInInventory("Mag_SCAR_H_40Rnd");
+			weapon = MissionObject.GetInventory().CreateInInventory("TTC_SCARHBlack");
+				weapon.GetInventory().CreateAttachment("TTC_HAMR");
+			MissionObject.GetInventory().CreateInInventory("TTC_SCARHMag");
 			MissionObject.GetInventory().CreateInInventory("Ammo_308Win");
-			MissionObject.GetInventory().CreateInInventory("Mag_SCAR_H_40Rnd");
+			MissionObject.GetInventory().CreateInInventory("TTC_SCARHMag");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("AmmoBox");
@@ -313,7 +318,11 @@ class NigerianPrinceMission extends SurvivorMissions
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 		}
-		
+		int card = Math.RandomIntInclusive(0,9);
+		int coin = Math.RandomIntInclusive(0,1);
+		if ( card <= 4 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 4 && card < 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );	
 		Print("[SMM] Mission rewards spawned in reward container. Randomly selected loadout was "+ selectedLoadout +"." );	
 	}
 	
@@ -399,7 +408,7 @@ class NigerianPrinceMission extends SurvivorMissions
 	{
 		//Set new mission messages
 		//Set messages for secondary mission
-		m_MissionMessage1 = "It is most auspicious that you have found the bag.  Take the bag and place the ten $100 Rubles inside it individually.  Then, hide it somewhere and leave it behind. The guide will verify the amount once you have left the area.";
+		m_MissionMessage1 = "It is most auspicious that you have found the bag.  Take the bag and place a single gold bar inside it individually.  Then, hide it somewhere and leave it behind. The guide will verify the amount once you have left the area.";
 		m_MissionMessage2 = "Upon completion of the verification, the guide said his associate will leave the Bible on the first floor of the Castle.  Pick it up from there and place it in my luggage on the top floor of\n** "+ m_MissionDescription[3] +" Castle. **\nOnce I have the Bible you shall have your reward.";
 		m_MissionMessage3 = "Be careful on your way to the castle at "+ m_MissionDescription[3] +", there might be bandits around who could intercepted our little radio talk here. Good luck!";
 		

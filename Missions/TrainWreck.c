@@ -1,11 +1,13 @@
 class TrainWreckMission extends SurvivorMissions
 {
+	 int MissionCutoffTime;
 	//Mission related entities 
 	Object Heli;
 	Object Turret;
 	ItemBase MissionObject;
 	ItemBase HeliKey;
 	//Object Boxcar;
+	string loadout = "ConvoyLoadout.json";
 	
 	//Mission parameters
 	int MsgDlyFinish = 30;					//seconds, message delay time after player has finished mission
@@ -51,16 +53,7 @@ class TrainWreckMission extends SurvivorMissions
 		
 		//Engine fire spawns 
 		FireSpawns.Insert("0.5 -1.0 -0.1");		//engine
-		/*FireSpawns.Insert("5.15 -2.18 -5");			//engine
-		FireSpawns.Insert("5.15 0 0");			//fire trace
-		FireSpawns.Insert("4.8 0 0.5");			//fire trace
-		FireSpawns.Insert("5.3 0 1");			//fire trace
-		FireSpawns.Insert("5.15 0 15");			//fire trace
-		FireSpawns.Insert("5.15 0 25");			//fire trace
-		//FireSpawns.Insert("5.15 0 30");			//fire trace
-		//FireSpawns.Insert("5.15 0 45");			//fire trace
-		//FireSpawns.Insert("5.15 0 55");			//fire trace
-		*/
+
 		//Container spawnpoints
 		ContainerSpawns.Insert("-16 1 4");
 		ContainerSpawns.Insert("-15 1 4");
@@ -145,6 +138,10 @@ class TrainWreckMission extends SurvivorMissions
 	//	Wreckage.Insert( new Param3<string,vector,vector>("bldr_wreck_t72_turret", "0.25 1.4 1.5", "-5 0 0"));
 		Wreckage.Insert( new Param3<string,vector,vector>("SmokePoint_1", "0 0 0", "0 0 0"));
 		Wreckage.Insert( new Param3<string,vector,vector>("SmokePoint_2", "3 1.5 6.5", "0 0 0"));
+	MissionCutoffTime = MissionSettings.RestartCycleTime - (m_MissionTimeout + MissionSettings.DelayTime);
+    
+    if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
+    MissionSettings.DelayTime = 3600;
 	}
 	
 	void ~TrainWreckMission()
@@ -177,7 +174,7 @@ class TrainWreckMission extends SurvivorMissions
 			}
 			else Print("[SMM] No mission AI's to despawn.");
 		}
-	#ifdef EAI
+
 		
 		eAIGroup g = deletethis;
 				for (int r = g.Count() - 1; r > -1; r--) {
@@ -188,7 +185,7 @@ class TrainWreckMission extends SurvivorMissions
 					}
 				}	
 		
-	#endif 
+
 		//Delete PlayersInZone list & reset container takeaway
 		if ( m_PlayersInZone )	m_PlayersInZone.Clear();
 		if ( m_ContainerWasTaken ) m_ContainerWasTaken = false;	
@@ -286,7 +283,7 @@ class TrainWreckMission extends SurvivorMissions
 		for (int k=0; k < ContainerSpawns.Count(); k++)
 		{	
 			MissionObject = ItemBase.Cast( GetGame().CreateObject( "WoodenCrate", Heli.ModelToWorld( ContainerSpawns.Get(k))));
-			
+			MissionObject.PlaceOnSurface();
 			//Get random loadout 
 			selectedLoadout = Math.RandomIntInclusive(0,9);	//!change randomization limit after adding new loadouts!	
 		
@@ -446,7 +443,11 @@ class TrainWreckMission extends SurvivorMissions
 				MissionObject.GetInventory().CreateInInventory("Hacksaw");
 
 			}	
-					
+		int card = Math.RandomIntInclusive(0,9);
+		int coin = Math.RandomIntInclusive(0,1);
+		if ( card <= 4 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 4 && card < 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );		
 			Print("[SMM] Mission rewards spawned in reward container"+i+". Randomly selected loadout was "+selectedLoadout+"." );
 				
 			//Insert mission container into mission objects list
@@ -456,29 +457,45 @@ class TrainWreckMission extends SurvivorMissions
 		Print("[SMM] Survivor Mission "+ m_selectedMission +" :: "+ m_MissionName +" ...mission deployed!");
 	}
 	
-		
-
-
-#ifdef EAI
-
+//	eAIBase SpawnAI_Helper(PlayerBase owner, string loadout = "ConvoyLoadout.json")
+//{
+//	eAIBase ai;
+//	if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), owner.GetPosition()))) return null;
+//
+//	ai.SetGroup(eAIGroup.GetGroupByLeader(owner));
+//
+//	ExpansionHumanLoadout.Apply(ai, loadout, true, eAISettings.GetLoadoutDirectories());
+//
+//	return ai;
+//}
 	
-void SpawnSentry(PlayerBase playername, string loadout = "HeliMissionPatrol.json") {
-    eAIGame game = MissionServer.Cast(GetGame().GetMission()).GetEAIGame();
-     (game.SpawnAI_Helper( playername, loadout )).RequestTransition("Rejoin");
-	 	deletethis = game.GetGroupByLeader(playername);
-		eAIGroup gg = deletethis;
-				for (int rr = gg.Count() - 1; rr > -1; rr--) {
-					PlayerBase pp = gg.GetMember(rr);
-					if (pp.IsAI()) {
-			Weapon_Base weapon = Weapon_Base.Cast(pp.GetItemInHands());
-			weapon.GetInventory().CreateAttachment("M4_OEBttstck");
-			weapon.GetInventory().CreateAttachment("M4_PlasticHndgrd");
-			weapon.GetInventory().CreateAttachment("M4_CarryHandleOptic");
-					}
-				}	
+		void SpawnSentry(PlayerBase owner) {
+		DayZExpansion game = GetDayZGame().GetExpansionGame();
+		eAIBase ai = game.SpawnAI_Helper(owner,loadout);
+		
+		//ai.SetGroup(eAIGroup.GetGroupByLeader(owner));
 
+	//	ExpansionHumanLoadout.Apply(ai, loadout, true, eAISettings.GetLoadoutDirectories());
+		deletethis = eAIGroup.GetGroupByLeader(owner);
+		deletethis.SetFormationState(eAIGroupFormationState.IN);
 	}
-#endif
+
+//   eAIGame game = MissionServer.Cast(GetGame().GetMission()).GetEAIGame();
+//    (game.SpawnAI_Helper( playername, loadout )).RequestTransition("Rejoin");
+//	 	deletethis = game.GetGroupByLeader(playername);
+//		eAIGroup gg = deletethis;
+//				for (int rr = gg.Count() - 1; rr > -1; rr--) {
+//					PlayerBase pp = gg.GetMember(rr);
+//					if (pp.IsAI()) {
+//			Weapon_Base weapon = Weapon_Base.Cast(pp.GetItemInHands());
+//			weapon.GetInventory().CreateAttachment("M4_OEBttstck");
+//			weapon.GetInventory().CreateAttachment("M4_PlasticHndgrd");
+//			weapon.GetInventory().CreateAttachment("M4_CarryHandleOptic");
+//					}
+//				}	
+//
+//	}
+
 	void SpawnAIs()
 	{	
 
@@ -516,7 +533,7 @@ void SpawnSentry(PlayerBase playername, string loadout = "HeliMissionPatrol.json
 		{
       //check the "player" and spawn it... or whatever u want to do
     //  then
-		SpawnSentry(player,"HumanLoadout.json");
+		SpawnSentry(player);
 		SentrySpawned = true;
 		}
 	}
