@@ -1,7 +1,9 @@
 class ConvoyMission extends SurvivorMissions
 {
+	int MissionCutoffTime;
 	//Mission related entities 
 	Car Heli; // vehicle reward, for this mission Heli is actually a hmmwv or dingo.
+	bool createIfNoneExists = true
 	Car TempHeli
 	Object Turret;
 	ItemBase MissionObject;
@@ -9,6 +11,11 @@ class ConvoyMission extends SurvivorMissions
 	Object Foxhole1;
 	Object Foxhole2;
 	vector Foxholepos;
+	#ifdef EXPANSIONMOD
+		#ifdef ENFUSION_AI_PROJECT
+		//eAIFactionCivilian civilian2 = new eAIFactionCivilian();
+		#endif
+		#endif
 	//Object Boxcar;
 	int HordeDensity = 30;					//infected per wave 
 	//Mission parameters
@@ -153,23 +160,26 @@ class ConvoyMission extends SurvivorMissions
 		//you can change this to whatever you want the vehicle to be.  beware of the naming scheme you might need to change code a bit.
 		//these two vehicle types have a standard naming convention for door parts, which lets you select the color you want easily.
 		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "", "_Armored"));
-		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_green", "_Armored"));
-		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_woodland", "_Armored"));
+		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_gold", "_Armored"));
+		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_camo", "_Armored"));
 		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_tan", "_Armored"));
-		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_pink", "_Armored"));
+		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_red", "_Armored"));
+		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_purple", "_Armored"));
 		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_winter", "_Armored"));
 		Vehicles.Insert( new Param3<string,string,string>("rag_hummer", "_anarchy", "_Armored"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "", ""));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_DARKGREEN"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_WTR"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CDF"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CP"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_UN"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CZ_Woodland"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CZ_DESERT"));
-		Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_GER_DESERT"));
+	//	Vehicles.Insert( new Param3<string,string,string>("Dingo", "", ""));
+	//	Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_DARKGREEN"));
+	//	Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_WTR"));
+	//	Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CDF"));
+		//Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CP"));
+		//Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_UN"));
+	//	Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CZ_Woodland"));
+		//Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_CZ_DESERT"));
+		//Vehicles.Insert( new Param3<string,string,string>("Dingo", "_Don", "_GER_DESERT"));
+		//Vehicles.Insert( new Param3<string,string,string>("ZIL_131", "", ""));
+		Vehicles.Insert( new Param3<string,string,string>("rag_mtvr", "", ""));
 		//Get random vehicle 
-		int	RandomVehicle = Math.RandomIntInclusive(0,15);	//!change randomization limit after adding new vehicles!
+		int	RandomVehicle = Math.RandomIntInclusive(0,7);	//!change randomization limit after adding new vehicles!
 		Param3<string,string,string> VehiclesDef = Vehicles.Get(RandomVehicle);	
 		VehicleType = VehiclesDef.param1;
 		VehicleColor1 = VehiclesDef.param2;
@@ -179,7 +189,7 @@ class ConvoyMission extends SurvivorMissions
 		WreckedVehicle.Insert( SelectedVehicle );		WreckedVehicle.Insert("bldr_wreck_bmp2");
 		WreckedVehicle.Insert("bldr_wreck_hmmwv");		WreckedVehicle.Insert("bldr_wreck_ural"); 
 		WreckedVehicle.Insert("Land_Wreck_Uaz");		WreckedVehicle.Insert("Land_wreck_truck01_aban2_blue");
-		WreckedVehicle.Insert("Land_wreck_truck01_aban2_green");	WreckedVehicle.Insert("SV_Truck");  //comment this vehicle out if you dont have SV mod.
+		WreckedVehicle.Insert("Land_wreck_truck01_aban2_green");	WreckedVehicle.Insert("Land_wreck_truck01_aban1_blue");  //comment this vehicle out if you dont have SV mod.
 				
 		string RandomWreck1 = WreckedVehicle.GetRandomElement(); 
 		//ensuring a scout vehicle will be picked (personal preference)
@@ -225,6 +235,10 @@ class ConvoyMission extends SurvivorMissions
 
 		Wreckage.Insert( new Param3<string,vector,vector>("Land_Dead_MassGrave", "-5 0 8", "0 0 0"));
 
+    MissionCutoffTime = MissionSettings.RestartCycleTime - (m_MissionTimeout + MissionSettings.DelayTime);
+    
+    if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
+    MissionSettings.DelayTime = 3600;
 	}
 	
 	void ~ConvoyMission()
@@ -302,7 +316,7 @@ class ConvoyMission extends SurvivorMissions
 			vector WreckageOri = WreckageDef.param3;
 			vector WreckageDir = Foxhole1.GetDirection();
 			if (WreckageType == "bldr_wreck_hmmwv") vector HMMWVpos = WreckagePos;
-			
+			Print("Selected Vehicle is: " + SelectedVehicle );
 			if (WreckageType == SelectedVehicle){
 			Heli = GetGame().CreateObject(SelectedVehicle, WreckagePos);
 				if (VehicleType == "rag_hummer")
@@ -324,6 +338,47 @@ class ConvoyMission extends SurvivorMissions
 					Heli.GetInventory().CreateAttachment("rag_hummer_Hood" + VehicleColor1);
 					Heli.GetInventory().CreateAttachment("rag_hummer_Trunk" + VehicleColor1);
 					
+				}
+				if (VehicleType == "rag_mtvr")
+				{
+					Heli.GetInventory().CreateAttachment("rag_mtvr_wheel");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_wheel");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_wheel");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_wheel");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_wheel");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_wheel");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_wheel");
+					Heli.GetInventory().CreateAttachment("SparkPlug");
+					Heli.GetInventory().CreateAttachment("TruckBattery");
+					Heli.GetInventory().CreateAttachment("CarRadiator");
+					Heli.GetInventory().CreateAttachment("HeadlightH7");
+					Heli.GetInventory().CreateAttachment("HeadlightH7");
+					Heli.GetInventory().CreateAttachment("CanisterGasoline");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_door_1_1");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_door_1_2");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_hood");
+					Heli.GetInventory().CreateAttachment("rag_mtvr_cargo1door");
+				
+				}
+				if (VehicleType == "ZIL_131")
+				{
+					Heli.GetInventory().CreateAttachment("ZIL_131_Wheel");
+					Heli.GetInventory().CreateAttachment("ZIL_131_Wheel");
+					Heli.GetInventory().CreateAttachment("ZIL_131_Wheel");
+					Heli.GetInventory().CreateAttachment("ZIL_131_Wheel");
+					Heli.GetInventory().CreateAttachment("ZIL_131_Wheel");
+					Heli.GetInventory().CreateAttachment("ZIL_131_Wheel");
+					Heli.GetInventory().CreateAttachment("ZIL_131_Wheel");
+					Heli.GetInventory().CreateAttachment("SparkPlug");
+					Heli.GetInventory().CreateAttachment("CarBattery");
+					Heli.GetInventory().CreateAttachment("CarRadiator");
+					Heli.GetInventory().CreateAttachment("HeadlightH7");
+					Heli.GetInventory().CreateAttachment("HeadlightH7");
+					Heli.GetInventory().CreateAttachment("CanisterGasoline");
+					Heli.GetInventory().CreateAttachment("ZIL_131_doors_driver");
+					Heli.GetInventory().CreateAttachment("ZIL_131_doors_codriver");
+					Heli.GetInventory().CreateAttachment("ZIL_131_doors_trunk");
+				
 				}
 				if (VehicleType == "Dingo")
 				{
@@ -523,10 +578,9 @@ class ConvoyMission extends SurvivorMissions
 				Heli.GetInventory().CreateInInventory("M18SmokeGrenade_Red");
 				Heli.GetInventory().CreateInInventory("M67Grenade");
 				Heli.GetInventory().CreateInInventory("M67Grenade");
-				Heli.GetInventory().CreateInInventory("M67Grenade");
 				Heli.GetInventory().CreateInInventory("RGD5Grenade");
 				Heli.GetInventory().CreateInInventory("RGD5Grenade");
-				Heli.GetInventory().CreateInInventory("RGD5Grenade");
+
 			}
 			if (selectedLoadout == 5)
 			{
@@ -541,8 +595,6 @@ class ConvoyMission extends SurvivorMissions
 				Heli.GetInventory().CreateInInventory("M18SmokeGrenade_Red");
 				Heli.GetInventory().CreateInInventory("M67Grenade");
 				Heli.GetInventory().CreateInInventory("M67Grenade");
-				Heli.GetInventory().CreateInInventory("M67Grenade");
-				Heli.GetInventory().CreateInInventory("RGD5Grenade");
 				Heli.GetInventory().CreateInInventory("RGD5Grenade");
 				Heli.GetInventory().CreateInInventory("RGD5Grenade");
 			}
@@ -609,7 +661,11 @@ class ConvoyMission extends SurvivorMissions
 				Heli.GetInventory().CreateInInventory("Hacksaw");
 
 			}	
-					
+		int card = Math.RandomIntInclusive(0,9);
+		int coin = Math.RandomIntInclusive(0,1);
+		if ( card <= 4 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 4 && card < 8 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 8 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_03" );		
 			Print("[SMM] Mission rewards spawned in reward container"+k+". Randomly selected loadout was "+selectedLoadout+"." );
 				
 			//Insert mission container into mission objects list
@@ -617,119 +673,57 @@ class ConvoyMission extends SurvivorMissions
 		}	
 	}
 
-#ifdef EAI
+		#ifdef ENFUSION_AI_PROJECT
+		#ifdef EXPANSIONMODAI
+	eAIGroup m_Group = null;
 
-	eAIGroup m_activeGroup = null;
 void SpawnSentry(vector pos, string loadout = "ConvoyLoadout.json") {
-    eAIGame game = MissionServer.Cast(GetGame().GetMission()).GetEAIGame();
-    eAIBase ai = game.SpawnAI_Sentry(pos, loadout);
-	m_activeGroup = ai.GetGroup();
-	deletethis = ai.GetGroup();
-	ai.GetGroup().SetFaction(new eAIFactionCivilian());
-	Weapon_Base weapon = Weapon_Base.Cast(ai.GetItemInHands());
-        switch(weapon.GetType())
-        {
-            case "TTC_FAL":				//these loadouts are not required, but you can use them to add attachments to your AI soldiers weapons.							
-                int loadout_FAL = Math.RandomIntInclusive(0,4);
-                switch(loadout_FAL)
-                {
-                    case 0: //loadout 0
-						weapon.GetInventory().CreateAttachment("TTC_FAL_RIS_Hndgrd");
-						weapon.GetInventory().CreateAttachment("TTC_FAL_OeBttstck");
-						weapon.GetInventory().CreateAttachment("UniversalLight");
-						weapon.GetInventory().CreateInInventory("Battery9V");
-                        break;
-					case 1: //loadout 1 
-						weapon.GetInventory().CreateAttachment("TTC_FAL_RIS_Hndgrd");
-						weapon.GetInventory().CreateAttachment("TTC_FAL_FoldingBttstck");
-                        break;
-					case 2: //loadout 2 
-						weapon.GetInventory().CreateAttachment("TTC_FAL_Poly_Hndgrd");
-						weapon.GetInventory().CreateAttachment("TTC_FAL_FoldingBttstck");
-                        break;
-					case 3: //loadout 3  
-						weapon.GetInventory().CreateAttachment("TTC_FAL_Poly_Hndgrd");
-						weapon.GetInventory().CreateAttachment("TTC_FAL_OeBttstck");
-                        break;
-					case 4: //loadout 4 
-						weapon.GetInventory().CreateAttachment("TTC_FAL_Wood_Hndgrd");
-						weapon.GetInventory().CreateAttachment("TTC_FAL_Wood_Bttstck");
-                        break;
-                }
-                break;
-			case "TTCSR25_Desert": 									  
-                int loadout_Desert = Math.RandomIntInclusive(0,5);
-                switch(loadout_Desert)
-                {
-                    case 0: //loadout 0 
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock_Digitan");
-                        break;
-					case 1: //loadout 1 
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock_Tan");
-						weapon.GetInventory().CreateAttachment("UniversalLight");
-						weapon.GetInventory().CreateInInventory("Battery9V");
-                        break;
-					case 2: //loadout 2 
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock_Tan");
-						weapon.GetInventory().CreateAttachment("UniversalLight");
-						weapon.GetInventory().CreateInInventory("Battery9V");
-                        break;
-                    case 3: //loadout 3 
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock_Digitan");
-						weapon.GetInventory().CreateAttachment("UniversalLight");
-						weapon.GetInventory().CreateInInventory("Battery9V");
-                        break;
-					 case 4: //loadout 4 - 
-						weapon.GetInventory().CreateAttachment("TTC_Buttstock_Morty");
-                        break;
-					case 5: //loadout 5 - 
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock");
-                        break;	
-                }
-				break;
-            case "TTCSR25_OD":	
-			case "TTCSR25_Snow":
-			case "TTCSR25":
-                int loadout_SR25 = Math.RandomIntInclusive(0,7);
-                switch(loadout_SR25)
-                {
-                    case 0: //loadout 0 - 
-						weapon.GetInventory().CreateAttachment("TTC_Buttstock_Morty");
-                        break;
-					case 1: //loadout 1 - 
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock");
-                        break;
-					case 2: //loadout 2 -
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock_Camo");
-                        break;
-                    case 3: //loadout 3 -
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock_UPC");
-                        break;
-                    case 4: //loadout 4 -
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock2");
-                        break;
-					case 5: //loadout 5 - 
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock3");
-                        break;
-					case 6: //loadout 6 -
-                        weapon.GetInventory().CreateAttachment("TTC_Buttstock_Morty");
-						weapon.GetInventory().CreateAttachment("UniversalLight");
-						weapon.GetInventory().CreateInInventory("Battery9V");
-                        break;
-					case 7: //loadout 7 -
-						weapon.GetInventory().CreateAttachment("UniversalLight");
-						weapon.GetInventory().CreateInInventory("Battery9V");
-						weapon.GetInventory().CreateAttachment("TTC_ButtstockHK_Black");
-                        break;
-                }
-                break;
-		}
-	ai.QuickReloadWeapon(weapon);
-	ai.SetUnlimitedMags(true);
-	m_MissionAIs.Insert(ai);
-
-}
+	DayZExpansion game = GetDayZGame().GetExpansionGame();
+	#ifdef ENFUSION_AI_PROJECT
+		eAIFactionCivilian civilian = new eAIFactionCivilian();
+		#ifdef EXPANSIONMODAI
+	eAIBase ai = game.SpawnAI_Patrol(pos, loadout);
+	#ifdef EAI_TRACE
+		auto trace = CF_Trace_0(this, "Spawn");
+		#endif
 #endif
+#endif
+	//	eAIBase ai = SpawnAI(pos);
+	
+		#ifdef ENFUSION_AI_PROJECT
+		#ifdef EXPANSIONMODAI
+		m_Group = ai.GetGroup();
+		m_Group.SetFaction( civilian );
+		m_Group.SetWaypointBehaviour(eAIWaypointBehavior.HALT);
+		string aigroupfaction = ai.GetGroup().GetFaction().GetName();
+		Print ("faction for ai is: "+ aigroupfaction);
+		m_Group.SetFormationState(eAIGroupFormationState.NONE);
+	//	foreach (vector v : m_Waypoints) m_Group.AddWaypoint(v);
+
+	//	int count = 1 - 1;
+	//	while (count != 0)
+	//	{
+	//		ai = SpawnAI(pos);
+	//		ai.SetGroup(m_Group);
+	//		count--;
+	//	}
+
+	m_MissionAIs.Insert(ai);
+	#endif
+#endif
+}
+	
+ //   DayZExpansion game = GetDayZGame().GetExpansionGame();
+//    eAIBase ai = SpawnAI_Sentry(pos, loadout);
+//	m_activeGroup = ai.GetGroup();
+//	deletethis = ai.GetGroup();
+//	ai.GetGroup().SetFaction(new eAIFactionCivilian());
+
+//		}
+//	ai.QuickReloadWeapon(weapon);
+	//ai.SetUnlimitedMags(true);
+
+
 	void SpawnAIs()
 	{	
 		
@@ -797,16 +791,11 @@ void SpawnSentry(vector pos, string loadout = "ConvoyLoadout.json") {
 			//Spawn infected
 			EntityAI horde = ( GetGame().CreateObject( InfectedTypes.GetRandomElement(), m_MissionPosition + NewPosVector, false, true ));	
 			m_MissionAIs.Insert(horde);
+		}
 	}
 
-
-
-	}
-	
 	void PlayerChecks( PlayerBase player )
 	{
-
-	player.GetGroup().SetFaction(new eAIFactionEast);
 
         for ( int ix=0; ix < m_MissionAIs.Count(); ix++)
         {
