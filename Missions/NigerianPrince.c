@@ -5,7 +5,10 @@ class NigerianPrinceMission extends SurvivorMissions
 	ItemBase MissionObject;
 	Object MissionBuilding;
 	Object PicnicTable;
-	
+	ExpansionMarkerData m_ExpansionServerMarker;
+	ExpansionMarkerModule m_ExpansionMarkerModule;
+	string MarkerName;
+	string MarkerIcon;
 	//Mission parameters
 	int ReqRubleAmount = 1;				//pieces, requested Ruble amount
 	int ReqBookAmount = 1;
@@ -30,6 +33,10 @@ class NigerianPrinceMission extends SurvivorMissions
 	
 	void NigerianPrinceMission()
 	{	
+		CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule);
+		MarkerName = "Deliver the Payment";
+		MarkerIcon = "Deliver";
+		CreateExpansionServerMarker();
 		//Select primary mission
 		m_MissionExtended = true;
 				
@@ -113,9 +120,27 @@ class NigerianPrinceMission extends SurvivorMissions
     if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
     MissionSettings.DelayTime = 3600;
 	}
-	
+	#ifdef EXPANSIONMODNAVIGATION
+	void CreateExpansionServerMarker()
+	{
+
+		if (!CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule))
+        return;
+
+		m_ExpansionServerMarker = m_ExpansionMarkerModule.CreateServerMarker(MarkerName, MarkerIcon, m_MissionPosition, ARGB(255,50,50,255), true);
+	}
+
+	void RemoveExpansionServerMarker()
+	{
+		if ( !m_ExpansionServerMarker )
+			return;
+		
+		m_ExpansionMarkerModule.RemoveServerMarker( m_ExpansionServerMarker.GetUID() );
+	}
+	#endif
 	void ~NigerianPrinceMission()
 	{	
+	 RemoveExpansionServerMarker();
 		//Despawn all remaining objects
 		if ( m_MissionObjects )
 		{
@@ -192,7 +217,7 @@ class NigerianPrinceMission extends SurvivorMissions
 	void SpawnRewards()
 	{
 		//new MissionObject after deleting protector case
-		MissionObject = ItemBase.Cast( GetGame().CreateObject( "MountainBag_Green", m_MissionPosition ));
+		MissionObject = ItemBase.Cast( GetGame().CreateObject( "mmg_assault_pack_olive", m_MissionPosition ));
 		Print("[SMM] Mission Object is" +MissionObject+"!");
 		
 		//Get random loadout 
@@ -240,8 +265,8 @@ class NigerianPrinceMission extends SurvivorMissions
 		if (selectedLoadout == 2)
 		{
 			weapon = MissionObject.GetInventory().CreateInInventory("AKM");
-				weapon.GetInventory().CreateAttachment("MSFC_AK_RailHndgrd_Woodland");
-				weapon.GetInventory().CreateAttachment("MSFC_AK_PlasticButtstock_Woodland");
+				weapon.GetInventory().CreateAttachment("AK_RailHndgrd");
+				weapon.GetInventory().CreateAttachment("AK_PlasticBttstck");
 				weapon.GetInventory().CreateAttachment("PSO1Optic");
 				weapon.GetInventory().CreateAttachment("AK_Suppressor");
 			MissionObject.GetInventory().CreateInInventory("Mag_AKM_30Rnd");
@@ -319,10 +344,10 @@ class NigerianPrinceMission extends SurvivorMissions
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 		}
 		int card = Math.RandomIntInclusive(0,9);
-		int coin = Math.RandomIntInclusive(0,1);
-		if ( card <= 4 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
-		if ( card > 4 && card < 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
-		if ( card >= 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );	
+		int coin = Math.RandomIntInclusive(0,3);
+		if ( card <= 6 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 6 && card < 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );	
 		Print("[SMM] Mission rewards spawned in reward container. Randomly selected loadout was "+ selectedLoadout +"." );	
 	}
 	
@@ -430,8 +455,11 @@ class NigerianPrinceMission extends SurvivorMissions
 		m_MissionPosition = ExtendedPosList.GetRandomElement();
 		else Print("[SMM] Can't get secondary MissionPosition in "+ m_MissionDescription[3] +" from EventsWorldData!");
 			
-			Print("[SMM] Survivor Mission Extension "+ m_selectedMission +" :: "+ m_MissionName +" ...secondary mission deployed!");
-
+		Print("[SMM] Survivor Mission Extension "+ m_selectedMission +" :: "+ m_MissionName +" ...secondary mission deployed!");
+		RemoveExpansionServerMarker();
+		MarkerName = "Find and Deliver Bible";
+		MarkerIcon = "Book 1";
+		CreateExpansionServerMarker();
 	}
 	
 	void MissionFinal()
@@ -523,6 +551,7 @@ class NigerianPrinceMission extends SurvivorMissions
 							//call rewards spawn one second later 
 							GetGame().GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( this.SpawnRewards, 1000 );
 							m_RewardsSpawned = true;
+							RemoveExpansionServerMarker();
 							m_MsgNum = -1;
 							m_MsgChkTime = m_MissionTime + MsgDlyFinish;
 							Print("remaining time is: "+ m_MsgChkTime +" misiontime is: " +m_MissionTime);

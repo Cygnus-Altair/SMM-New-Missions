@@ -12,8 +12,11 @@ class CaptureFlagMission extends SurvivorMissions
 	vector bpos;
 	eAIGroup m_Group;
 	string loadout = "CaptureFlagLoadout.json";
-	
-	 int MissionCutoffTime;
+	ExpansionMarkerData m_ExpansionServerMarker;
+	ExpansionMarkerModule m_ExpansionMarkerModule;
+	string MarkerName;
+	string MarkerIcon;
+	int MissionCutoffTime;
 	
 	//Mission parameters
 	int MsgDlyFinish = 60;					//seconds, message delay time after player has finished mission
@@ -46,6 +49,10 @@ class CaptureFlagMission extends SurvivorMissions
 	
 	void CaptureFlagMission()
 	{
+		CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule);
+        MarkerName = "Recapture Position";
+        MarkerIcon = "Helicopter";
+		CreateExpansionServerMarker();
 		//Select primary mission
 		m_MissionExtended = true;
 		
@@ -190,9 +197,27 @@ class CaptureFlagMission extends SurvivorMissions
     if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
     MissionSettings.DelayTime = 3600;
 	}
-	
+	#ifdef EXPANSIONMODNAVIGATION
+    void CreateExpansionServerMarker()
+    {
+
+        if (!CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule))
+        return;
+
+        m_ExpansionServerMarker = m_ExpansionMarkerModule.CreateServerMarker(MarkerName, MarkerIcon, m_MissionPosition, ARGB(255,50,50,255), true);
+    }
+
+    void RemoveExpansionServerMarker()
+    {
+        if ( !m_ExpansionServerMarker )
+            return;
+        
+        m_ExpansionMarkerModule.RemoveServerMarker( m_ExpansionServerMarker.GetUID() );
+    }
+    #endif
 	void ~CaptureFlagMission()
 	{		
+		RemoveExpansionServerMarker();
 		//Despawn all remaining mission objects
 		if ( m_MissionObjects )
 		{	
@@ -564,7 +589,7 @@ class CaptureFlagMission extends SurvivorMissions
 			if (selectedLoadout == 0)
 			{
 				weapon = MissionObject.GetInventory().CreateInInventory("M4A1");
-					weapon.GetInventory().CreateAttachment("M4_RISHndgrd_Green");
+					weapon.GetInventory().CreateAttachment("M4_RISHndgrd");
 					weapon.GetInventory().CreateAttachment("M4_MPBttstck");
 					weapon.GetInventory().CreateAttachment("M4_Suppressor");
 					weapon.GetInventory().CreateAttachment("ACOGOptic");
@@ -759,7 +784,9 @@ class CaptureFlagMission extends SurvivorMissions
 			}
 		
 			//barrel add firewood and start fire
-			BarrelFire = BarrelHoles_ColorBase.Cast( m_MissionObjects[6] );
+			BarrelFire = BarrelHoles_Yellow.Cast( m_MissionObjects[9] );
+			if ( BarrelFire )
+			{
 			BarrelFire.Open();
 			BarrelFire.Synchronize();
 			
@@ -773,15 +800,17 @@ class CaptureFlagMission extends SurvivorMissions
 			if ( BarrelFire.IsOpen() )	BarrelFire.Close();
 			for ( i=0; i < 7; i++)
 			BarrelFire.GetInventory().CreateAttachment("MackerelFilletMeat");
-
+		}
+			else //or print to script log that this error happened
+			Print("[SMM] ERROR : The target object "+ m_MissionObjects[6].ClassName() +" couldn't be casted to the target class!");
 			
 			Print("[SMM] Mission rewards spawned in reward container. Randomly selected loadout was "+ selectedLoadout +"." );
 		}
 		int card = Math.RandomIntInclusive(0,9);
-		int coin = Math.RandomIntInclusive(0,1);
-		if ( card <= 4 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
-		if ( card > 4 && card < 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
-		if ( card >= 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );	
+		int coin = Math.RandomIntInclusive(0,3);
+		if ( card <= 6 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 6 && card < 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );	
 		EntityAI.Cast( Heli ).SetLifetime( 3888000 );
 		
 			//Spawn infected pilot
@@ -845,8 +874,14 @@ class CaptureFlagMission extends SurvivorMissions
 
 		eAIFactionShamans Shamans = new eAIFactionShamans();
 		DayZExpansion game = GetDayZGame().GetExpansionGame();
-		eAIBase ai = game.SpawnAI_Patrol(pos,loadout);
+		//eAIBase ai = game.SpawnAI_Patrol(pos,loadout);
 	//	eAIBase ai = SpawnMissionAI(pos);
+	eAIBase ai;
+		if (Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos)))
+			ExpansionHumanLoadout.Apply(ai, loadout, true);
+
+		if (ai)
+		//	ai.SetGroup(group);
 		m_Group = ai.GetGroup();
 		m_Group.SetFaction(Shamans);
 		deletethis = ai.GetGroup();
@@ -975,7 +1010,7 @@ class CaptureFlagMission extends SurvivorMissions
 			
 	void MissionFinal()
 	{	//When player enters last mission target zone	
-
+		RemoveExpansionServerMarker();
 		//Finish mission
 		m_RewardsSpawned = true;
 		m_MsgNum = -1;

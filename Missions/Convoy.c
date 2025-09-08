@@ -11,6 +11,10 @@ class ConvoyMission extends SurvivorMissions
 	Object Foxhole1;
 	Object Foxhole2;
 	vector Foxholepos;
+	ExpansionMarkerData m_ExpansionServerMarker;
+	ExpansionMarkerModule m_ExpansionMarkerModule;
+	string MarkerName;
+	string MarkerIcon;
 	#ifdef EXPANSIONMOD
 		#ifdef ENFUSION_AI_PROJECT
 		//eAIFactionCivilian civilian2 = new eAIFactionCivilian();
@@ -55,6 +59,10 @@ class ConvoyMission extends SurvivorMissions
 	
 	void ConvoyMission()
 	{
+		CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule);
+        MarkerName = "Defend Convoy";
+        MarkerIcon = "Vehicle Crash";
+        CreateExpansionServerMarker();
 		//Mission mission timeout
 		m_MissionTimeout = 2400;			//seconds, mission duration time
 
@@ -240,9 +248,27 @@ class ConvoyMission extends SurvivorMissions
     if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
     MissionSettings.DelayTime = 3600;
 	}
-	
+	#ifdef EXPANSIONMODNAVIGATION
+    void CreateExpansionServerMarker()
+    {
+
+        if (!CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule))
+        return;
+
+        m_ExpansionServerMarker = m_ExpansionMarkerModule.CreateServerMarker(MarkerName, MarkerIcon, m_MissionPosition, ARGB(255,50,50,255), true);
+    }
+
+    void RemoveExpansionServerMarker()
+    {
+        if ( !m_ExpansionServerMarker )
+            return;
+        
+        m_ExpansionMarkerModule.RemoveServerMarker( m_ExpansionServerMarker.GetUID() );
+    }
+    #endif
 	void ~ConvoyMission()
 	{
+		RemoveExpansionServerMarker();
 		//Despawn all remaining mission objects
 		if ( m_MissionObjects )
 		{	
@@ -662,10 +688,10 @@ class ConvoyMission extends SurvivorMissions
 
 			}	
 		int card = Math.RandomIntInclusive(0,9);
-		int coin = Math.RandomIntInclusive(0,1);
-		if ( card <= 4 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
-		if ( card > 4 && card < 8 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
-		if ( card >= 8 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_03" );		
+		int coin = Math.RandomIntInclusive(0,3);
+		if ( card <= 6 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 6 && card < 9 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 9 && coin ==1 ) Heli.GetInventory().CreateInInventory("RedemptionKeyCard_03" );		
 			Print("[SMM] Mission rewards spawned in reward container"+k+". Randomly selected loadout was "+selectedLoadout+"." );
 				
 			//Insert mission container into mission objects list
@@ -682,7 +708,11 @@ void SpawnSentry(vector pos, string loadout = "ConvoyLoadout.json") {
 	#ifdef ENFUSION_AI_PROJECT
 		eAIFactionCivilian civilian = new eAIFactionCivilian();
 		#ifdef EXPANSIONMODAI
-	eAIBase ai = game.SpawnAI_Patrol(pos, loadout);
+	//eAIBase ai = game.SpawnAI_Patrol(pos, loadout);
+	eAIBase ai;
+		if (Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos)))
+			ExpansionHumanLoadout.Apply(ai, loadout, true);
+	
 	#ifdef EAI_TRACE
 		auto trace = CF_Trace_0(this, "Spawn");
 		#endif
@@ -835,7 +865,7 @@ void SpawnSentry(vector pos, string loadout = "ConvoyLoadout.json") {
 			string messageF = "The vehicle is now unlocked!\nTake care of the remaining infected and then evac!";
 			//string icon = "set:dayz_inventory image:walkietalkie";            
 			NotificationSystem.SendNotificationToPlayerIdentityExtended( player.GetIdentity() , 10.0, m_MissionInformant + ":", messageF, icon );
-			
+			RemoveExpansionServerMarker();
 			Heli.Fill(CarFluid.FUEL, 50);  //this puts in about a third of a tank of gas.
 			Heli.Fill(CarFluid.OIL, 100);
 			Heli.Fill(CarFluid.BRAKE, 100);

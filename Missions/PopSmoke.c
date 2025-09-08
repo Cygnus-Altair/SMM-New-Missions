@@ -1,9 +1,14 @@
 class PopSmokeMission extends SurvivorMissions
 {
+	int MissionCutoffTime;
 	//Mission related entities
 	Car MissionCar;
 	Object MissionBuilding;
 	ItemBase MissionObject;
+	ExpansionMarkerData m_ExpansionServerMarker;
+	ExpansionMarkerModule m_ExpansionMarkerModule;
+	string MarkerName;
+	string MarkerIcon;
 	//FireplaceBase MissionCampfire;
 	//Grenade_Base BoobyTrap;	
 	//	BoobyTrap = Grenade_Base.Cast( GetGame().CreateObject( "M18SmokeGrenade_Green" , m_MissionPosition, false, false, false ));
@@ -35,6 +40,10 @@ class PopSmokeMission extends SurvivorMissions
 	
 	void PopSmokeMission()
 	{		
+		CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule);
+		MarkerName = "Recover Grenades";
+		MarkerIcon = "Grenade";
+		CreateExpansionServerMarker();
 		//Select primary mission
 		m_MissionExtended = true;
 		
@@ -146,11 +155,33 @@ class PopSmokeMission extends SurvivorMissions
 	//	MissionCampfire.StartFire( true );
 	//	m_MissionObjects.Insert( MissionCampfire );
 					
-		}			
+		}	
+MissionCutoffTime = MissionSettings.RestartCycleTime - (m_MissionTimeout + MissionSettings.DelayTime + ExtendedTimout );
+    
+    if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
+    MissionSettings.DelayTime = 3600;		
 	}
-	
+	#ifdef EXPANSIONMODNAVIGATION
+    void CreateExpansionServerMarker()
+    {
+
+        if (!CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule))
+        return;
+
+        m_ExpansionServerMarker = m_ExpansionMarkerModule.CreateServerMarker(MarkerName, MarkerIcon, m_MissionPosition, ARGB(255,50,50,255), true);
+    }
+
+    void RemoveExpansionServerMarker()
+    {
+        if ( !m_ExpansionServerMarker )
+            return;
+        
+        m_ExpansionMarkerModule.RemoveServerMarker( m_ExpansionServerMarker.GetUID() );
+    }
+    #endif
 	void ~PopSmokeMission()
 	{	
+	RemoveExpansionServerMarker();
 		//Despawn all remaining mission objects
 		if ( m_MissionObjects )
 		{
@@ -218,26 +249,26 @@ class PopSmokeMission extends SurvivorMissions
 	//	BoobyTrap3.Unpin();		
 		
 		//new MissionObject 
-		MissionObject = ItemBase.Cast( GetGame().CreateObject( "WoodenCrate", m_MissionPosition ));
+		MissionObject = ItemBase.Cast( GetGame().CreateObject( "FZhardigg", m_MissionPosition ));
 		
 		//Get random loadout 
 		int selectedLoadout = Math.RandomIntInclusive( 0, 5);	//!change randomization limit after adding new loadouts!	
-
+		//int keycard = 
 		//Spawn selected loadout items in mission object
 		EntityAI weapon;
 				
 		if ( selectedLoadout == 0 )
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_M4A1_MULTICAM");
+			weapon = MissionObject.GetInventory().CreateInInventory("M4A1");
 				weapon.GetInventory().CreateAttachment("M4_RISHndgrd");
 				weapon.GetInventory().CreateAttachment("M4_OEBttstck");
-				weapon.GetInventory().CreateAttachment("AD_ACOG");
+				weapon.GetInventory().CreateAttachment("TTC_HAMR");
 				weapon.GetInventory().CreateAttachment("M4_Suppressor");
 			MissionObject.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_STANAG_30Rnd");
 			MissionObject.GetInventory().CreateInInventory("M4_T3NRDSOptic_mung");
-			MissionObject.GetInventory().CreateInInventory("Ammo_556x45");
-			MissionObject.GetInventory().CreateInInventory("Ammo_556x45");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_556x45_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_556x45_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("CanOpener");
 			MissionObject.GetInventory().CreateInInventory("PeachesCan");
 			MissionObject.GetInventory().CreateInInventory("Canteen");
@@ -246,17 +277,17 @@ class PopSmokeMission extends SurvivorMissions
 		}
 		if (selectedLoadout == 1)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_SVD_STAR");
+			weapon = MissionObject.GetInventory().CreateInInventory("SVD");
 				weapon.GetInventory().CreateAttachment("PSO1Optic");
 			MissionObject.GetInventory().CreateInInventory("Mag_SVD_10Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_SVD_10Rnd");
 			MissionObject.GetInventory().CreateInInventory("PSO1Optic");
 			MissionObject.GetInventory().CreateInInventory("KazuarOptic");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x54");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x54");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x54");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x54");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x54");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x54_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x54_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x54_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x54_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x54_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("CanOpener");
 			MissionObject.GetInventory().CreateInInventory("PeachesCan");
 			MissionObject.GetInventory().CreateInInventory("Canteen");
@@ -265,16 +296,16 @@ class PopSmokeMission extends SurvivorMissions
 		}
 		if (selectedLoadout == 2)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_AKM_MATRIX");
+			weapon = MissionObject.GetInventory().CreateInInventory("AKM");
 				weapon.GetInventory().CreateAttachment("AK_RailHndgrd");
-				weapon.GetInventory().CreateAttachment("AK_PlasticButtstock");
+				weapon.GetInventory().CreateAttachment("AK_PlasticBttstck");
 				weapon.GetInventory().CreateAttachment("PSO1Optic");
 				weapon.GetInventory().CreateAttachment("AK_Suppressor");
 			MissionObject.GetInventory().CreateInInventory("Mag_AKM_30Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_AKM_30Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("CanOpener");
 			MissionObject.GetInventory().CreateInInventory("PeachesCan");
 			MissionObject.GetInventory().CreateInInventory("Canteen");
@@ -283,17 +314,18 @@ class PopSmokeMission extends SurvivorMissions
 		}
 		if (selectedLoadout == 3)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("FAL");
+			weapon = MissionObject.GetInventory().CreateInInventory("TTC_FAL");
+				weapon.GetInventory().CreateAttachment("TTC_FAL_RIS_Hndgrd");
 				weapon.GetInventory().CreateAttachment("Fal_OeBttstck");
 			MissionObject.GetInventory().CreateInInventory("Mag_FAL_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_FAL_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_FAL_20Rnd");
 			MissionObject.GetInventory().CreateInInventory("M4_Suppressor");
-			MissionObject.GetInventory().CreateInInventory("AD_ACOG");
+			MissionObject.GetInventory().CreateInInventory("TTC_HAMR");
 			MissionObject.GetInventory().CreateInInventory("FNX45");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_45ACP");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_45ACP_25Rnd");
 			MissionObject.GetInventory().CreateInInventory("FNP45_MRDSOptic");
 			MissionObject.GetInventory().CreateInInventory("PistolSuppressor");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
@@ -302,35 +334,39 @@ class PopSmokeMission extends SurvivorMissions
 		}	
 		if (selectedLoadout == 4)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_SKS_HONEYCOMB");
+			weapon = MissionObject.GetInventory().CreateInInventory("SKS");
 				weapon.GetInventory().CreateAttachment("PUScopeOptic");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
-			MissionObject.GetInventory().CreateInInventory("Ammo_762x39");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_762x39_20Rnd");
 			weapon = MissionObject.GetInventory().CreateInInventory("FNX45");
 				weapon.GetInventory().CreateAttachment("PistolSuppressor");
 				EntityAI weaponlight = weapon.GetInventory().CreateAttachment("TLRLight");
 					weaponlight.GetInventory().CreateAttachment("Battery9V");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_45ACP");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_45ACP_25Rnd");
 			MissionObject.GetInventory().CreateInInventory("AmmoBox");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 		}	
 		if (selectedLoadout == 5)
 		{
-			weapon = MissionObject.GetInventory().CreateInInventory("MSFC_Winchester70_ORANGE");
+			weapon = MissionObject.GetInventory().CreateInInventory("Winchester70");
 				weapon.GetInventory().CreateAttachment("AD_Pilad");
 			MissionObject.GetInventory().CreateInInventory("Ammo_308Win");
 			MissionObject.GetInventory().CreateInInventory("FNX45");
 			MissionObject.GetInventory().CreateInInventory("Mag_FNX45_15Rnd");
-			MissionObject.GetInventory().CreateInInventory("Ammo_45ACP");
+			MissionObject.GetInventory().CreateInInventory("AmmoBox_45ACP_25Rnd");
 			MissionObject.GetInventory().CreateInInventory("AmmoBox");
 			MissionObject.GetInventory().CreateInInventory("PistolSuppressor");
 			MissionObject.GetInventory().CreateInInventory("TLRLight");
 			MissionObject.GetInventory().CreateInInventory("Battery9V");
 			MissionObject.GetInventory().CreateInInventory("Goldbar_Base");
 		}
-		
+		int card = Math.RandomIntInclusive(0,9);
+		int coin = Math.RandomIntInclusive(0,3);
+		if ( card <= 6 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 6 && card < 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );	
 		Print("[SMM] Mission rewards spawned in reward container. Randomly selected loadout was "+selectedLoadout+"." );			
 	}
 	
@@ -437,7 +473,9 @@ class PopSmokeMission extends SurvivorMissions
 	
 	void ExtendMission()
 	{	//When player enters mission target zone at primary mission
-		
+		RemoveExpansionServerMarker();
+		MarkerName = "Deploy Smoke";
+		MarkerIcon = "Home Made Grenade";
 		//Set messages for secondary mission
 		m_MissionMessage1 = "All right, so you have found the grenades in the house. Place the grenades in the bag, then bring the bag to "+ SurvivorName +".";
 		m_MissionMessage2 = "After you have them, bring them to the end of the Airport Runway ** "+ m_MissionDescription[3] +" **\nin the middle of the traffic cones, and "+ SurvivorName +" will set them off to mark out an area for the airdrop.";
@@ -456,8 +494,9 @@ class PopSmokeMission extends SurvivorMissions
 		m_MissionZoneInnerRadius = 2.0;
 		
 		//Get secondary mission position
-		if ( EventsWorldData.GetBuildingsAtLoc("none", m_MissionDescription[3], ExtendedPosList ))
+		if ( EventsWorldData.GetBuildingsAtLoc("none", m_MissionDescription[3], ExtendedPosList )){
 		m_MissionPosition = ExtendedPosList.GetRandomElement();
+		CreateExpansionServerMarker();}
 		else Print("[SMM] Can't get secondary MissionPosition in "+ m_MissionDescription[3] +" from EventsWorldData!");
 	}
 	
@@ -520,6 +559,7 @@ class PopSmokeMission extends SurvivorMissions
 								GetGame().GetCallQueue( CALL_CATEGORY_GAMEPLAY ).CallLater( this.SpawnRewards, 10000 );
 								//SpawnRewards();
 								m_RewardsSpawned = true;
+								RemoveExpansionServerMarker();
 								m_MsgNum = -1;
 								m_MsgChkTime = m_MissionTime + MsgDlyFinish;
 								break;

@@ -8,7 +8,10 @@ class TrainWreckMission extends SurvivorMissions
 	ItemBase HeliKey;
 	//Object Boxcar;
 	string loadout = "ConvoyLoadout.json";
-	
+	ExpansionMarkerData m_ExpansionServerMarker;
+	ExpansionMarkerModule m_ExpansionMarkerModule;
+	string MarkerName;
+	string MarkerIcon;
 	//Mission parameters
 	int MsgDlyFinish = 30;					//seconds, message delay time after player has finished mission
 	
@@ -33,6 +36,10 @@ class TrainWreckMission extends SurvivorMissions
 	
 	void TrainWreckMission()
 	{
+		CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule);
+        MarkerName = "Search Train Wreck";
+        MarkerIcon = "Walkie Talkie";
+		CreateExpansionServerMarker();
 		//Mission mission timeout
 		m_MissionTimeout = 2400;			//seconds, mission duration time
 		
@@ -143,9 +150,27 @@ class TrainWreckMission extends SurvivorMissions
     if ( GetGame().GetTime() * 0.001 > MissionCutoffTime )
     MissionSettings.DelayTime = 3600;
 	}
-	
+	#ifdef EXPANSIONMODNAVIGATION
+    void CreateExpansionServerMarker()
+    {
+
+        if (!CF_Modules<ExpansionMarkerModule>.Get(m_ExpansionMarkerModule))
+        return;
+
+        m_ExpansionServerMarker = m_ExpansionMarkerModule.CreateServerMarker(MarkerName, MarkerIcon, m_MissionPosition, ARGB(255,50,50,255), true);
+    }
+
+    void RemoveExpansionServerMarker()
+    {
+        if ( !m_ExpansionServerMarker )
+            return;
+        
+        m_ExpansionMarkerModule.RemoveServerMarker( m_ExpansionServerMarker.GetUID() );
+    }
+    #endif
 	void ~TrainWreckMission()
 	{
+		RemoveExpansionServerMarker();
 		//Despawn all remaining mission objects
 		if ( m_MissionObjects )
 		{	
@@ -444,10 +469,10 @@ class TrainWreckMission extends SurvivorMissions
 
 			}	
 		int card = Math.RandomIntInclusive(0,9);
-		int coin = Math.RandomIntInclusive(0,1);
-		if ( card <= 4 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
-		if ( card > 4 && card < 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
-		if ( card >= 8 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );		
+		int coin = Math.RandomIntInclusive(0,3);
+		if ( card <= 6 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_01" );
+		if ( card > 6 && card < 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_02" );
+		if ( card >= 9 && coin ==1 ) MissionObject.GetInventory().CreateInInventory("RedemptionKeyCard_03" );		
 			Print("[SMM] Mission rewards spawned in reward container"+i+". Randomly selected loadout was "+selectedLoadout+"." );
 				
 			//Insert mission container into mission objects list
@@ -457,44 +482,28 @@ class TrainWreckMission extends SurvivorMissions
 		Print("[SMM] Survivor Mission "+ m_selectedMission +" :: "+ m_MissionName +" ...mission deployed!");
 	}
 	
-//	eAIBase SpawnAI_Helper(PlayerBase owner, string loadout = "ConvoyLoadout.json")
-//{
-//	eAIBase ai;
-//	if (!Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), owner.GetPosition()))) return null;
-//
-//	ai.SetGroup(eAIGroup.GetGroupByLeader(owner));
-//
-//	ExpansionHumanLoadout.Apply(ai, loadout, true, eAISettings.GetLoadoutDirectories());
-//
-//	return ai;
-//}
-	
-		void SpawnSentry(PlayerBase owner) {
-		DayZExpansion game = GetDayZGame().GetExpansionGame();
-		eAIBase ai = game.SpawnAI_Helper(owner,loadout);
-		
-		//ai.SetGroup(eAIGroup.GetGroupByLeader(owner));
 
-	//	ExpansionHumanLoadout.Apply(ai, loadout, true, eAISettings.GetLoadoutDirectories());
+	
+		void SpawnSentry(PlayerBase owner)
+	{
+		DayZExpansion game = GetDayZGame().GetExpansionGame();
+	//	eAIBase ai = game.SpawnAI_Helper(owner,loadout);
+		
+		auto group = eAIGroup.GetGroupByLeader(owner);
+		auto form = group.GetFormation();
+		vector pos = ExpansionAISpawnBase.GetPlacementPosition(form.ToWorld(form.GetPosition(group.Count())));
+		eAIBase ai;
+		if (Class.CastTo(ai, GetGame().CreateObject(GetRandomAI(), pos)))
+			ExpansionHumanLoadout.Apply(ai, loadout, true);
+
+		if (ai)
+			ai.SetGroup(group);
+		
 		deletethis = eAIGroup.GetGroupByLeader(owner);
 		deletethis.SetFormationState(eAIGroupFormationState.IN);
 	}
 
-//   eAIGame game = MissionServer.Cast(GetGame().GetMission()).GetEAIGame();
-//    (game.SpawnAI_Helper( playername, loadout )).RequestTransition("Rejoin");
-//	 	deletethis = game.GetGroupByLeader(playername);
-//		eAIGroup gg = deletethis;
-//				for (int rr = gg.Count() - 1; rr > -1; rr--) {
-//					PlayerBase pp = gg.GetMember(rr);
-//					if (pp.IsAI()) {
-//			Weapon_Base weapon = Weapon_Base.Cast(pp.GetItemInHands());
-//			weapon.GetInventory().CreateAttachment("M4_OEBttstck");
-//			weapon.GetInventory().CreateAttachment("M4_PlasticHndgrd");
-//			weapon.GetInventory().CreateAttachment("M4_CarryHandleOptic");
-//					}
-//				}	
-//
-//	}
+
 
 	void SpawnAIs()
 	{	
@@ -524,7 +533,7 @@ class TrainWreckMission extends SurvivorMissions
 		m_RewardsSpawned = true;
 		m_MsgNum = -1;
 		m_MsgChkTime = m_MissionTime + MsgDlyFinish;
-
+		RemoveExpansionServerMarker();
 	}
 	
 	void PlayerChecks( PlayerBase player )

@@ -6,9 +6,11 @@ class HeliStealMission extends SurvivorMissions
 	Car Heli;
 	ItemBase MissionObject;
 	ItemBase HeliKey;
+	int HordeDensity = 30;					//infected per wave 
+	string KeyColor;
 	
 	//Mission parameters
-	int MsgDlyFinish = 30;					//seconds, message delay time after player has finished mission
+	int MsgDlyFinish = 300;					//seconds, message delay time after player has finished mission
 	
 	//Mission containers
 	ref array<vector> ContainerSpawns = new array<vector>;
@@ -20,6 +22,8 @@ class HeliStealMission extends SurvivorMissions
 	ref array<string> foodTypes = new array<string>;	
 	ref array<string> missionbots = new array<string>;
 	ref array<string> helperbot = new array<string>;
+	ref array<string> KeyColors = new array<string>;
+	ref array<Object> DeadInfected = new array<Object>;
 	ref array<vector> patrol_100 = {"-44 0 -44","-44 0 0","-44 0 44","0 0 44","44 0 34","44 0 0","44 0 -44","0 0 -44"};
 	eAIGroup deletethis = null;
 	//Mission variables 
@@ -43,9 +47,9 @@ class HeliStealMission extends SurvivorMissions
 		SurvivorName = "Gerry Lane";
 		
 		//Set mission messages
-        m_MissionMessage1 = "Be advised: A helicopter has landed "+ m_MissionLocationDir +" of "+ m_MissionLocation + " and is offloading cargo.";
-        m_MissionMessage2 = "Take out the guards, secure the heli, and exfil.";
-        m_MissionMessage3 = "If it is locked, search the pilot for the key.";		
+        m_MissionMessage1 = "Be advised: A helicopter has crash landed "+ m_MissionLocationDir +" of "+ m_MissionLocation + " and the pilot is looking for parts.";
+        m_MissionMessage2 = "Take out the guards, replace one main and one tail rotor, and kill the pilot for the key.";
+        m_MissionMessage3 = "Don't risk your life if you do not have the blades ready... I heard the Tisy Bunker might have one.";		
 		
 		//Engine fire spawns 
 		/*FireSpawns.Insert("5.15 -2.18 -4.63");		//engine
@@ -69,8 +73,11 @@ class HeliStealMission extends SurvivorMissions
 		HeliTypes.Insert("HeliSIB_UH1D_navy_clear");
 		HeliTypes.Insert("HeliSIB_UH1D_airforce_clear");
 		HeliTypes.Insert("HeliSIB_uh1d_FZKilgore_clear");
-		HeliTypes.Insert("Helilittle_bird_RF_clear");
-		HeliTypes.Insert("Heli_apache_clear");		
+		//HeliTypes.Insert("Helilittle_bird_RF_clear");
+		//HeliTypes.Insert("Heli_apache_clear");		
+		//HeliTypes.Insert("Helichinook_RF_clear");	
+		//HeliTypes.Insert("Heliblack_hawk_SIB_clear");	
+		//HeliTypes.Insert("Heliblack_hawk_SIB_camo_clear");	
 		
 		//Create Random Ammo selection
 		ammoTypes.Insert("AmmoBox_308WinTracer_20Rnd");
@@ -138,6 +145,12 @@ class HeliStealMission extends SurvivorMissions
 		InfectedTypes.Insert("ZmbM_ClerkFat_White");		InfectedTypes.Insert("ZmbF_MechanicNormal_Grey");
 		InfectedTypes.Insert("ZmbM_Jacket_magenta");		InfectedTypes.Insert("ZmbF_BlueCollarFat_Green");
 		InfectedTypes.Insert("ZmbM_PolicemanSpecForce");	InfectedTypes.Insert("ZmbF_DoctorSkinny");
+		
+		KeyColors.Insert("MCK_CarKey");				KeyColors.Insert("MCK_CarKey_Blue"); 
+		KeyColors.Insert("MCK_CarKey_White");					KeyColors.Insert("MCK_CarKey_Green");
+		KeyColors.Insert("MCK_CarKey_Red");	KeyColors.Insert("MCK_CarKey_Yellow");  //comment this vehicle out if you dont have SV mod.
+				
+		KeyColor = KeyColors.GetRandomElement(); 
 		/*
 		m_MissionEvents.RemoveOrdered( m_selectedMission );
 		m_MissionPositions.RemoveOrdered( m_selectedMission );
@@ -231,7 +244,7 @@ class HeliStealMission extends SurvivorMissions
 		Heli = Car.Cast(GetGame().CreateObject( RandomHeli, m_MissionPosition ));
 		Heli.SetOrientation( PlaneOrientation.ToVector() );
 		Heli.PlaceOnSurface();
-		if (RandomHeli == "Helilittle_bird_RF_Clear")
+		if (RandomHeli == "Helilittle_bird_RF_clear")
 		{
 			Heli.GetInventory().CreateAttachment("RFlittle_bird_blade1");
 			Heli.GetInventory().CreateAttachment("RFlittle_bird_blade2");
@@ -262,9 +275,9 @@ class HeliStealMission extends SurvivorMissions
 		}
 		if (RandomHeli == "HeliSIB_uh1d_FZKilgore_clear")
 		{
-			Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_blade2");
-			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem2");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_1_FZKilgore");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_2_FZKilgore");
@@ -276,9 +289,9 @@ class HeliStealMission extends SurvivorMissions
 		}
 		if (RandomHeli == "HeliSIB_UH1D_clear")
 		{
-			Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_blade2");
-			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem2");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_2");
@@ -290,9 +303,9 @@ class HeliStealMission extends SurvivorMissions
 		}
 		if (RandomHeli == "HeliSIB_UH1D_iron_clear")
 		{
-			Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_blade2");
-			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem2");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_1_iron");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_2_iron");
@@ -304,9 +317,9 @@ class HeliStealMission extends SurvivorMissions
 		}
 		if (RandomHeli == "HeliSIB_UH1D_navy_clear")
 		{
-			Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_blade2");
-			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem2");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_1_navy");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_2_navy");
@@ -318,14 +331,63 @@ class HeliStealMission extends SurvivorMissions
 		}
 		if (RandomHeli == "HeliSIB_UH1D_airforce_clear")
 		{
-			Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_blade1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_blade2");
-			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
+			//Heli.GetInventory().CreateAttachment("SIBUH1D_bladem1");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_bladem2");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_1_airforce");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_1_2_airforce");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_2_1_airforce");
 			Heli.GetInventory().CreateAttachment("SIBUH1D_Door_2_2_airforce");
+			Heli.GetInventory().CreateAttachment("CarBattery");
+			Heli.GetInventory().CreateAttachment("HeadlightH7");
+			Heli.GetInventory().CreateAttachment("HeadlightH7");
+		}
+		if (RandomHeli == "Heliblack_hawk_SIB_clear")
+		{
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_blade1");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_blade2");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_blade3");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem1");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem2");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem3");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem4");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_1_1");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_1_2");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_2_1");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_2_2");
+			Heli.GetInventory().CreateAttachment("CarBattery");
+			Heli.GetInventory().CreateAttachment("HeadlightH7");
+			Heli.GetInventory().CreateAttachment("HeadlightH7");
+		}
+		if (RandomHeli == "Heliblack_hawk_SIB_camo_clear")
+		{
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_blade1");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_blade2");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_blade3");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem1");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem2");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem3");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_bladem4");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_1_1_camo");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_1_2_camo");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_2_1_camo");
+			Heli.GetInventory().CreateAttachment("SIBblack_hawk_Door_2_2_camo");
+			Heli.GetInventory().CreateAttachment("CarBattery");
+			Heli.GetInventory().CreateAttachment("HeadlightH7");
+			Heli.GetInventory().CreateAttachment("HeadlightH7");
+		}
+		if (RandomHeli == "Helichinook_RF_clear")
+		{
+			Heli.GetInventory().CreateAttachment("RFchinook_blade1");
+			Heli.GetInventory().CreateAttachment("RFchinook_blade2");
+			Heli.GetInventory().CreateAttachment("RFchinook_blade3");
+			Heli.GetInventory().CreateAttachment("RFchinook_rear_blade1");
+			Heli.GetInventory().CreateAttachment("RFchinook_rear_blade2");
+			Heli.GetInventory().CreateAttachment("RFchinook_rear_blade3");
+			Heli.GetInventory().CreateAttachment("RFchinook_Door_1_1_camo");
+			Heli.GetInventory().CreateAttachment("RFchinook_Door_1_2_camo");
+			Heli.GetInventory().CreateAttachment("RFchinook_Door_2_2_camo");
 			Heli.GetInventory().CreateAttachment("CarBattery");
 			Heli.GetInventory().CreateAttachment("HeadlightH7");
 			Heli.GetInventory().CreateAttachment("HeadlightH7");
@@ -739,6 +801,50 @@ for ( i=0; i < patrols.Count(); i++)
 			m_MissionAIs.Insert( GetGame().CreateObject( RandomInfected, InfectedPos, false, true ));			
 		}
 		*/
+		//Spawn horde
+		
+		for ( int j = 0; j < HordeDensity; j++ )
+		{
+			int Dice1 = Math.RandomIntInclusive( 0, 9);  // Dice are outside the For loop so infected all spawn in same quadrant.
+		int Dice2 = Math.RandomIntInclusive( 0, 9);
+			//calc new spawn position
+			float x = Math.RandomFloatInclusive( 15 , 60 );
+			float y = Math.RandomFloatInclusive( 15 , 60 );	
+
+			if ( Dice1 > 4 ) x *= -1.0;  
+			if ( Dice2 < 5 ) y *= -1.0;  
+
+			vector NewPosVector = { x, 0, y };
+			
+			//Spawn infected
+			EntityAI horde = ( GetGame().CreateObject( InfectedTypes.GetRandomElement(), m_MissionPosition + NewPosVector, false, true ));	
+			m_MissionAIs.Insert(horde);
+		
+		
+			
+		//
+		CarScript carScript = CarScript.Cast( Heli );
+		carScript.m_IsCKLocked = true;
+		}
+	}
+	
+	void PlayerChecks( PlayerBase player )
+	{
+		for ( int ix=0; ix < m_MissionAIs.Count(); ix++)
+        {
+            Object MissionAI = m_MissionAIs.Get(ix);
+            if ( MissionAI && !MissionAI.IsAlive() )
+            {
+                if ( DeadInfected.Find( MissionAI ) > -1 )
+                continue;
+                else
+                {
+                    DeadInfected.Insert( MissionAI );
+                }
+            }
+		}
+		if ( DeadInfected.Count() >= 25 && !m_RewardsSpawned)
+        {
 		//Finish mission
 		EntityAI.Cast( Heli ).SetLifetime( 3888000 );
 
@@ -748,20 +854,20 @@ for ( i=0; i < patrols.Count(); i++)
 		m_MsgChkTime = m_MissionTime + MsgDlyFinish;
 		//Spawn infected pilot
 		vector InfectedPos = Heli.ModelToWorld( "-9 0 9" );
+		Print("[SMM] There are currently"+m_MissionAIs.Count()+" Mision AIs." );
 		m_MissionAIs.Insert( GetGame().CreateObject( "ZmbM_CommercialPilotOld_Olive" , InfectedPos , false , true ) );
-		DayZInfected InfectedSurvivor = DayZInfected.Cast( m_MissionAIs[0] );
+		DayZInfected InfectedSurvivor = DayZInfected.Cast( m_MissionAIs[30] );
 			InfectedSurvivor.GetInventory().CreateAttachment("ZSh3PilotHelmet_Green");
-			InfectedSurvivor.GetInventory().CreateAttachment("UKAssVest_Olive");
+		ItemBase Vest =	InfectedSurvivor.GetInventory().CreateAttachment("UKAssVest_Olive");
 			InfectedSurvivor.GetInventory().CreateInInventory("Glock19");
 			InfectedSurvivor.GetInventory().CreateInInventory("Mag_Glock_15Rnd");
 			InfectedSurvivor.GetInventory().CreateInInventory("Battery9V");
-			InfectedSurvivor.GetInventory().CreateInInventory("Battery9V");
-		HeliKey = InfectedSurvivor.GetInventory().CreateInInventory("MCK_CarKey_White");
-			
-		//
-		CarScript carScript = CarScript.Cast( Heli );
+		Grenade_Base smoke = Vest.GetInventory().CreateAttachment("M18SmokeGrenade_Purple");
+		smoke.Unpin();	
+		HeliKey = InfectedSurvivor.GetInventory().CreateInInventory(KeyColor);
+		CarScript carScript2 = CarScript.Cast( Heli );
 
-		if( carScript )
+		if( carScript2 )
 		{
 			MCK_CarKey_Base carKey = MCK_CarKey_Base.Cast(HeliKey);            
             if(carKey)
@@ -769,20 +875,16 @@ for ( i=0; i < patrols.Count(); i++)
                 int mck_id = carKey.GenerateNewID();
 				carKey.SetNewMCKId(mck_id);                
 
-                carScript.m_CarKeyId = mck_id;
-                carScript.m_HasCKAssigned = true;
-				carScript.SynchronizeValues(); 
+                carScript2.m_CarKeyId = mck_id;
+                carScript2.m_HasCKAssigned = true;
+				carScript2.SynchronizeValues(); 
 		//		m_MCKLogger.LogMCKActivity("Heli Mission has assigned new owner and key (ID: " + mck_id + " ) to vehicle " + carScript.GetDisplayName() + " (" + carScript.m_CarScriptId + ")");
             }
-			carScript.m_IsCKLocked = true;
-			carScript.SynchronizeValues();
-			carScript.ResetLifetime();
+			carScript2.m_IsCKLocked = true;
+			carScript2.SynchronizeValues();
+			carScript2.ResetLifetime();
 		}
-	}
-	
-	void PlayerChecks( PlayerBase player )
-	{
-		//nothing to check
+		}
 	}
 		
 	void UpdateBots(float dt)
